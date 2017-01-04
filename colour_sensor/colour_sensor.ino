@@ -30,27 +30,6 @@ void setup() {
 uint16_t red, green, blue, clearness; // make some global variables to store measured data
 
 
-struct  R_G_B {
-  int R;
-  int G;
-  int B;
-};
-
-//damn, can't make structs be return type in Arduino, or not easily...
-R_G_B sensorReadingsTo255Range(float red_meas, float green_meas, float blue_meas, float clear_meas) {
-  uint8_t sum = red_meas + green_meas + blue_meas + clear_meas;
-  float r, g, b;
-  r = red_meas/sum;
-  g = green_meas/sum;
-  b = blue_meas/sum;
-  r = r*256;
-  g = g*256;
-  b = b*256;
-
-  struct R_G_B Values = {(int)r, (int)g, (int)b};
-  return Values;
-}
-
 void loop() {
   tcs.setInterrupt(false); // turn on the sensor's white LED, for consistent readings
   delay(60); // takes some time to read the data
@@ -64,13 +43,22 @@ void loop() {
   Serial.print("\tG:\t"); Serial.print(green);
   Serial.print("\tB:\t"); Serial.print(blue);   Serial.print("\n");
 
-  R_G_B shown = sensorReadingsTo255Range(red, green, blue, clearness);
+  // code to turn the measured values into 0 - 255 range
+  // NOT in a separate function def because returning got messy...
+  uint32_t sum = red + green + blue + clearness;
+  float r, g, b;
+  r = red;      g = green;    b = blue;
+  r /= sum;         g /= sum;         b /= sum;
+  r = r*256;        g = g*256;        b = b*256;
+  int r_show, g_show, b_show;
+  r_show = (int)r;  g_show = (int)g;  b_show = (int)b;
 
-  Serial.print("\tR 255:\t"); Serial.print(shown.R);
-  Serial.print("\tG 255:\t"); Serial.print(shown.G);
-  Serial.print("\tB 255:\t"); Serial.print(shown.B);   Serial.print("\n");
+  Serial.print("\t\tR:\t"); Serial.print(r_show);
+  Serial.print("\tG:\t"); Serial.print(g_show);
+  Serial.print("\tB:\t"); Serial.print(b_show);   Serial.print("\n");
 
-  //strip.setPixelColor(0, r_show, g_show, b_show);
+  strip.setPixelColor(0, r_show, g_show, b_show);
+  strip.show();
 
   delay(5000);
   
