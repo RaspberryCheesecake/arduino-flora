@@ -8,6 +8,8 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(1, PIN, NEO_GRB + NEO_KHZ800);
 
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
 
+byte gammatable[256];
+
 void setup() {
   Serial.begin(9600); //open serial port to PC at 9600 baud
   while(!Serial) ; // while serial port isn't open yet, wait
@@ -25,10 +27,21 @@ void setup() {
     while(1); // 'halt'
   }
 
+  // set up the Gamma table
+  // thanks PhilB for this gamma table!
+  // it helps convert RGB colors to what humans see
+  for (int i=0; i<256; i++) {
+    float x = i;
+    x /= 255;
+    x = pow(x, 2.5);
+    x *= 255;
+      
+    gammatable[i] = x;      
+  }
+
 }
 
 uint16_t red, green, blue, clearness; // make some global variables to store measured data
-
 
 void loop() {
   tcs.setInterrupt(false); // turn on the sensor's white LED, for consistent readings
@@ -53,11 +66,15 @@ void loop() {
   int r_show, g_show, b_show;
   r_show = (int)r;  g_show = (int)g;  b_show = (int)b;
 
-  Serial.print("\t\tR:\t"); Serial.print(r_show);
+  Serial.print("\t255\tR:\t"); Serial.print(r_show);
   Serial.print("\tG:\t"); Serial.print(g_show);
   Serial.print("\tB:\t"); Serial.print(b_show);   Serial.print("\n");
 
-  strip.setPixelColor(0, r_show, g_show, b_show);
+  Serial.print("\tgamma\tR:\t"); Serial.print(gammatable[r_show]);
+  Serial.print("\tG:\t"); Serial.print(gammatable[g_show]);
+  Serial.print("\tB:\t"); Serial.print(gammatable[b_show]);   Serial.print("\n");
+
+  strip.setPixelColor(0, gammatable[r_show], gammatable[g_show], gammatable[b_show]);
   strip.show();
 
   delay(5000);
