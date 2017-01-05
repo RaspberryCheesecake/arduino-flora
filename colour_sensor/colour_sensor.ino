@@ -11,21 +11,8 @@ Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS3472
 byte gammatable[256];
 
 void setup() {
-  Serial.begin(9600); //open serial port to PC at 9600 baud
-  while(!Serial) ; // while serial port isn't open yet, wait
-  // this is important otherwise the Serial will print
-  // before our monitor is ready!
-  Serial.println("Colour viewing test!");
-
   strip.begin(); //setup neopixels
   strip.show(); // initialise all neopixels to off
-  
-  if (Serial == true) {
-    Serial.println("Found colour sensor TCS34725!");
-  } else {
-    Serial.println("No TCS34725 found... check connections :(");
-    while(1); // 'halt'
-  }
 
   // set up the Gamma table
   // thanks PhilB for this gamma table!
@@ -33,11 +20,13 @@ void setup() {
   for (int i=0; i<256; i++) {
     float x = i;
     x /= 255;
-    x = pow(x, 2.5);
+    x = pow(x, 2); // I think 2 actually works a bit better than 2.5
     x *= 255;
       
     gammatable[i] = x;      
   }
+
+  tcs.setInterrupt(true);  // now turn off the sensor's white LED
 
 }
 
@@ -59,11 +48,6 @@ void loop() {
   // by emulating pass by reference, yesss
   tcs.setInterrupt(true);  // now turn off the sensor's white LED
 
-  Serial.print("C:\t"); Serial.print(clearness);
-  Serial.print("\tR:\t"); Serial.print(red);
-  Serial.print("\tG:\t"); Serial.print(green);
-  Serial.print("\tB:\t"); Serial.print(blue);   Serial.print("\n");
-
   // code to turn the measured values into 0 - 255 range
   // NOT in a separate function def because returning got messy...
   float r, g, b;
@@ -76,16 +60,6 @@ void loop() {
   r = r*256;        g = g*256;        b = b*256;
   int r_show, g_show, b_show;
   r_show = (int)r;  g_show = (int)g;  b_show = (int)b;
-
-  Serial.print("\t255\tR:\t"); Serial.print(r_show);
-  Serial.print("\tG:\t"); Serial.print(g_show);
-  Serial.print("\tB:\t"); Serial.print(b_show);   Serial.print("\n");
-
-  Serial.print("\tgamma\tR:\t"); Serial.print(gammatable[r_show]);
-  Serial.print("\tG:\t"); Serial.print(gammatable[g_show]);
-  Serial.print("\tB:\t"); Serial.print(gammatable[b_show]);   Serial.print("\n");
-
-  
 
   colorWipe(strip.Color(gammatable[r_show], gammatable[g_show], gammatable[b_show]), 500);
   strip.show();
